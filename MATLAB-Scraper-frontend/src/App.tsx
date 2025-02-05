@@ -18,7 +18,7 @@ function App() {
     setError('');
     
     try {
-      const response = await fetch(`http://localhost:3000/api/questions?term=${encodeURIComponent(term)}`);
+      const response = await fetch(`https://matlab-answer-scraper.onrender.com/api/questions?term=${encodeURIComponent(term)}`);
       const data = await response.json();
       
       if (data.success) {
