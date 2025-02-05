@@ -78,7 +78,7 @@ function App() {
 
      for (let i = 1; i < words.length; i++) {
        const word = words[i];
-       const width = doc.getStringUnitWidth(currentLine + ' ' + word) * doc.internal.getFontSize();
+       const width = doc.getStringUnitWidth(currentLine + ' ' + word) * doc.getFontSize();
        
        if (width < maxWidth) {
          currentLine += ' ' + word;
