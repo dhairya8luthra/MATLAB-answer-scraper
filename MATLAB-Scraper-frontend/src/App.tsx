@@ -49,104 +49,138 @@ function App() {
   const downloadPDF = () => {
     const doc = new jsPDF();
     
-  // Add title
-  doc.setFontSize(20);
-  doc.setTextColor(41, 84, 155);
-  doc.text('MathWorks Questions Report', 14, 22);
-  
-  // Add search info
-  doc.setFontSize(12);
-  doc.setTextColor(100);
-  doc.text(`Search Term: "${searchTerm}"`, 14, 32);
-  doc.text(`Total Questions: ${filteredQuestions.length}`, 14, 39);
-  doc.text(`Filter: ${showOnlyUnupdated ? 'Unupdated Questions Only' : 'All Questions'}`, 14, 46);
-  
-  // Add timestamp
-  doc.setFontSize(10);
-  doc.setTextColor(130);
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 53);
-  
-  // Add horizontal line
-  doc.setDrawColor(200);
-  doc.line(14, 56, 196, 56);
-  
-  // Prepare table data
-  const tableData = filteredQuestions.map(q => [
-    {
-      content: q.title,
-      link: q.link
-    },
-    formatDate(q.published),
-    formatDate(q.updated),
-    q.author?.name || 'Anonymous',
-    q.content.substring(0, 100) + '...'
-  ]);
-  
-  // Add table
-  autoTable(doc, {
-    startY: 60,
-    head: [['Title', 'Published', 'Updated', 'Author', 'Content Preview']],
-    body: tableData,
-    headStyles: {
-      fillColor: [41, 84, 155],
-      textColor: 255,
-      fontSize: 10,
-      fontStyle: 'bold'
-    },
-    bodyStyles: {
-      fontSize: 9,
-      textColor: 50
-    },
-    columnStyles: {
-      0: { cellWidth: 50 },
-      1: { cellWidth: 35 },
-      2: { cellWidth: 35 },
-      3: { cellWidth: 25 },
-      4: { cellWidth: 40 }
-    },
-    alternateRowStyles: {
-      fillColor: [245, 247, 250]
-    },
-    margin: { top: 60 },
-    didDrawCell: function(data) {
-      // Add clickable links to titles
-      if (data.section === 'body' && data.column.index === 0 && data.cell.raw) {
-        const { content, link } = data.cell.raw as { content: string; link: string };
-        
-        // Clear the cell's existing content
-        const width = data.cell.width;
-        const height = data.cell.height;
-        doc.setFillColor(data.row.index % 2 === 0 ? 255 : 245, data.row.index % 2 === 0 ? 255 : 247, data.row.index % 2 === 0 ? 255 : 250);
-        doc.rect(data.cell.x, data.cell.y, width, height, 'F');
-        
-        // Add the link
-        doc.setTextColor(41, 84, 155);
-        doc.setFontSize(9);
-        
-        // Calculate text height to vertically center
-        const textHeight = doc.getTextDimensions(content).h;
-        const yPosition = data.cell.y + (height - textHeight) / 2 + 3;
-        
-        // Add the link with proper positioning
-        doc.textWithLink(
-          content,
-          data.cell.x + 2,
-          yPosition,
-          { url: link }
-        );
-      }
-    },
-    didDrawPage: function(data) {
-      // Add page number at the bottom
-      doc.setFontSize(10);
-      doc.setTextColor(130);
-      doc.text(
-        `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
-        data.settings.margin.left,
-        doc.internal.pageSize.height - 10
-      );
-    }
-  });
+   // Add title
+   doc.setFontSize(20);
+   doc.setTextColor(41, 84, 155);
+   doc.text('MathWorks Questions Report', 14, 22);
+   
+   // Add search info
+   doc.setFontSize(12);
+   doc.setTextColor(100);
+   doc.text(`Search Term: "${searchTerm}"`, 14, 32);
+   doc.text(`Total Questions: ${filteredQuestions.length}`, 14, 39);
+   doc.text(`Filter: ${showOnlyUnupdated ? 'Unupdated Questions Only' : 'All Questions'}`, 14, 46);
+   
+   // Add timestamp
+   doc.setFontSize(10);
+   doc.setTextColor(130);
+   doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 53);
+   
+   // Add horizontal line
+   doc.setDrawColor(200);
+   doc.line(14, 56, 196, 56);
+   
+   // Helper function to split text into lines
+   const splitTextToFitWidth = (text: string, maxWidth: number) => {
+     const words = text.split(' ');
+     const lines: string[] = [];
+     let currentLine = words[0];
+
+     for (let i = 1; i < words.length; i++) {
+       const word = words[i];
+       const width = doc.getStringUnitWidth(currentLine + ' ' + word) * doc.internal.getFontSize();
+       
+       if (width < maxWidth) {
+         currentLine += ' ' + word;
+       } else {
+         lines.push(currentLine);
+         currentLine = word;
+       }
+     }
+     lines.push(currentLine);
+     return lines;
+   };
+   
+   // Prepare table data
+   const tableData = filteredQuestions.map(q => [
+     {
+       content: q.title,
+       link: q.link
+     },
+     formatDate(q.published),
+     formatDate(q.updated),
+     q.author?.name || 'Anonymous',
+     q.content.substring(0, 100) + '...'
+   ]);
+   
+   // Add table
+   autoTable(doc, {
+     startY: 60,
+     head: [['Title', 'Published', 'Updated', 'Author', 'Content Preview']],
+     body: tableData,
+     headStyles: {
+       fillColor: [41, 84, 155],
+       textColor: 255,
+       fontSize: 10,
+       fontStyle: 'bold'
+     },
+     bodyStyles: {
+       fontSize: 9,
+       textColor: 50,
+       cellPadding: 3,
+       lineColor: [200, 200, 200],
+       lineWidth: 0.1
+     },
+     columnStyles: {
+       0: { cellWidth: 65 },
+       1: { cellWidth: 25 },
+       2: { cellWidth: 25 },
+       3: { cellWidth: 25 },
+       4: { cellWidth: 45 }
+     },
+     alternateRowStyles: {
+       fillColor: [245, 247, 250]
+     },
+     margin: { top: 60, left: 14, right: 14 },
+     didDrawCell: function(data) {
+       // Add clickable links to titles
+       if (data.section === 'body' && data.column.index === 0 && data.cell.raw) {
+         const { content, link } = data.cell.raw as { content: string; link: string };
+         
+         // Clear the cell's existing content
+         const width = data.cell.width;
+         const height = data.cell.height;
+         doc.setFillColor(data.row.index % 2 === 0 ? 255 : 245, data.row.index % 2 === 0 ? 255 : 247, data.row.index % 2 === 0 ? 255 : 250);
+         doc.rect(data.cell.x, data.cell.y, width, height, 'F');
+         
+         // Add the link
+         doc.setTextColor(41, 84, 155);
+         doc.setFontSize(9);
+         
+         // Split text into lines that fit the cell width
+         const maxWidth = width - 4; // Account for padding
+         const lines = splitTextToFitWidth(content, maxWidth);
+         
+         // Calculate total text height
+         const lineHeight = doc.getTextDimensions('M').h * 1.2;
+         const totalTextHeight = lineHeight * lines.length;
+         
+         // Calculate starting Y position to vertically center all lines
+         let yPosition = data.cell.y + (height - totalTextHeight) / 2 + lineHeight;
+         
+         // Draw each line
+         lines.forEach(line => {
+           doc.textWithLink(
+             line,
+             data.cell.x + 2,
+             yPosition,
+             { url: link }
+           );
+           yPosition += lineHeight;
+         });
+       }
+     },
+     didDrawPage: function(data) {
+       // Add page number at the bottom
+       doc.setFontSize(10);
+       doc.setTextColor(130);
+       doc.text(
+         `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
+         data.settings.margin.left,
+         doc.internal.pageSize.height - 10
+       );
+     }
+   });
     
     // Save the PDF
     doc.save(`mathworks-questions-${new Date().toISOString().split('T')[0]}.pdf`);
